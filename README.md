@@ -16,15 +16,41 @@
 - Cuenta AWS con permisos suficientes
 
 
-Estructura del Proyecto
+## 📁 Estructura del Proyecto
+
+```
 Lab04-IAC/
-├── 📂 application/
-│   ├── 🌐 frontend/           # Interfaz web (HTML/JS)
-│   └── ƛ lambda-functions/    # Código fuente de las funciones
-├── 📂 infrastructure/
-│   ├── 📦 modules/            # Módulos reutilizables de Terraform
-│   └── 🌍 environments/       # Configuraciones por entorno (Dev, QA, Prod)
-└── 📂 docs/                   # Documentación y evidencias
+├── application/
+│   ├── frontend/
+│   │   └── index.html              # Interfaz web de carga de imágenes
+│   └── lambda-functions/
+│       ├── build.ps1                # Script para empaquetar Lambdas
+│       ├── upload/
+│       │   ├── index.js             # Código de la Lambda de upload
+│       │   └── package.json         # Dependencias (busboy, uuid, aws-sdk)
+│       └── crop/
+│           ├── index.js             # Código de la Lambda de crop
+│           └── package.json         # Dependencias (sharp, aws-sdk)
+├── infrastructure/
+│   ├── modules/
+│   │   ├── networking/              # VPC, Subnets, NAT, VPC Endpoints, SGs
+│   │   ├── lambda/                  # Funciones Lambda y Event Source Mapping
+│   │   ├── s3/                      # Bucket S3 con versionado y lifecycle
+│   │   ├── sqs/                     # Cola principal, DLQ, SNS, Alarma
+│   │   ├── iam/                     # Roles y políticas IAM
+│   │   ├── api_gateway/             # HTTP API v2 con CORS
+│   │   └── observability/           # Dashboard CloudWatch
+│   ├── environments/
+│   │   ├── dev/                     # Entorno de desarrollo
+│   │   ├── qa/                      # Entorno de pruebas
+│   │   └── prod/                    # Entorno de producción (NAT HA)
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── versiones.tf
+└── docs/
+    └── evidencias/                  # Screenshots y evidencias de despliegue
+```
+
 
 ##  Despliegue
 
