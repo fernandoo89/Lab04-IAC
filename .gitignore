@@ -1,0 +1,22 @@
+# Dependencias de Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+tfplan
+.terraform.lock.hcl
+
+# Binarios y comprimidos
+*.zip
+*.rar
+*.7z
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -23,6 +23,7 @@ exports.handler = async (event) => {
     return new Promise((resolve, reject) => {
         const busboy = Busboy({ headers: { 'content-type': contentType } });
         const uploads = [];
+        const promises = [];
 
         busboy.on('file', (fieldname, file, info) => {
             const { filename, mimeType } = info;
@@ -40,56 +41,73 @@ exports.handler = async (event) => {
                 chunks.push(data);
             });
 
-            file.on('end', async () => {
-                try {
-                    const buffer = Buffer.concat(chunks);
-                    const fileSize = buffer.length;
+            const uploadPromise = new Promise((resolveFile, rejectFile) => {
+                file.on('end', async () => {
+                    try {
+                        const buffer = Buffer.concat(chunks);
+                        const fileSize = buffer.length;
 
-                    // Validar tamaño (10MB max)
-                    if (fileSize > 10 * 1024 * 1024) {
-                        throw new Error('File size exceeds 10MB limit');
-                    }
-
-                    const fileId = uuidv4();
-                    const extension = filename.split('.').pop();
-                    const key = `uploads/${fileId}.${extension}`;
-
-                    await s3Client.send(new PutObjectCommand({
-                        Bucket: process.env.S3_BUCKET,
-                        Key: key,
-                        Body: buffer,
-                        ContentType: mimeType,
-                        Metadata: {
-                            'original-filename': filename,
-                            'upload-timestamp': new Date().toISOString()
+                        // Validar tamaño (10MB max)
+                        if (fileSize > 10 * 1024 * 1024) {
+                            throw new Error('File size exceeds 10MB limit');
                         }
-                    }));
 
-                    uploads.push({
-                        fileId,
-                        filename,
-                        size: fileSize,
-                        type: mimeType,
-                        s3Key: key
-                    });
-                } catch (error) {
-                    console.error('Upload error:', error);
-                }
+                        const fileId = uuidv4();
+                        const extension = filename.split('.').pop();
+                        const key = `uploads/${fileId}.${extension}`;
+
+                        await s3Client.send(new PutObjectCommand({
+                            Bucket: process.env.S3_BUCKET,
+                            Key: key,
+                            Body: buffer,
+                            ContentType: mimeType,
+                            Metadata: {
+                                'original-filename': filename,
+                                'upload-timestamp': new Date().toISOString()
+                            }
+                        }));
+
+                        uploads.push({
+                            fileId,
+                            filename,
+                            size: fileSize,
+                            type: mimeType,
+                            s3Key: key
+                        });
+                        resolveFile();
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        rejectFile(error);
+                    }
+                });
             });
+            promises.push(uploadPromise);
         });
 
-        busboy.on('finish', () => {
-            resolve({
-                statusCode: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({
-                    message: 'Upload successful',
-                    files: uploads
-                })
-            });
+        busboy.on('finish', async () => {
+            try {
+                await Promise.all(promises);
+                resolve({
+                    statusCode: 200,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({
+                        message: 'Upload successful',
+                        files: uploads
+                    })
+                });
+            } catch (error) {
+                resolve({
+                    statusCode: 500,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({ error: error.message })
+                });
+            }
         });
 
         busboy.on('error', (error) => {

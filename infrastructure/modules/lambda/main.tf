@@ -21,7 +21,6 @@ resource "aws_lambda_function" "upload" {
     variables = {
       S3_BUCKET      = var.s3_bucket_name
       UPLOAD_PREFIX  = "uploads/"
-      AWS_REGION     = "us-east-2"
     }
   }
 
@@ -59,7 +58,6 @@ resource "aws_lambda_function" "crop" {
     variables = {
       S3_BUCKET       = var.s3_bucket_name
       PROCESSED_PREFIX = "processed/"
-      AWS_REGION      = "us-east-2"
     }
   }
 
