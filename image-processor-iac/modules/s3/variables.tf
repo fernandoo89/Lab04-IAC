@@ -13,3 +13,7 @@ variable "aws_account_id" {
 variable "sqs_queue_arn" {
   type = string
 }
+
+variable "sqs_queue_url" {
+  type = string
+}

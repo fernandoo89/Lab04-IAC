@@ -70,6 +70,7 @@ module "s3" {
   environment     = var.environment
   aws_account_id  = data.aws_caller_identity.current.account_id
   sqs_queue_arn   = module.sqs.queue_arn
+  sqs_queue_url   = module.sqs.queue_url
 }
 
 # ============================================================================

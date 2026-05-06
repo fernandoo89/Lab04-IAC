@@ -3,6 +3,7 @@ resource "random_string" "bucket_suffix" {
   length  = 8
   special = false
   lower   = true
+  upper   = false
 }
 
 # Bucket S3
@@ -69,8 +70,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "images" {
 
 # Política para permitir a S3 enviar notificaciones a SQS
 resource "aws_sqs_queue_policy" "allow_s3_to_sqs" {
-  queue_url = var.sqs_queue_arn
-
+  queue_url = var.sqs_queue_url
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
