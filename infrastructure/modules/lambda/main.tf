@@ -1,29 +1,14 @@
 # ============================================================================
-# LAMBDA LAYER para dependencias (opcional, pero útil)
-# ============================================================================
-
-# ============================================================================
 # UPLOAD LAMBDA FUNCTION
 # ============================================================================
 
-# Crear archivo ZIP simple para upload-lambda
-data "archive_file" "upload_lambda_zip" {
-  type        = "zip"
-  output_path = "/tmp/upload-lambda.zip"
-  
-  source {
-    content  = "exports.handler = async (event) => { return { statusCode: 200, body: 'Upload handler' }; };"
-    filename = "index.js"
-  }
-}
-
 resource "aws_lambda_function" "upload" {
-  filename         = data.archive_file.upload_lambda_zip.output_path
+  filename         = "${path.module}/../../../application/lambda-functions/upload-lambda.zip"
   function_name   = "${var.project_name}-${var.environment}-upload-lambda"
   role             = var.upload_lambda_role_arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
-  source_code_hash = data.archive_file.upload_lambda_zip.output_base64sha256
+  source_code_hash = filebase64sha256("${path.module}/../../../application/lambda-functions/upload-lambda.zip")
   timeout          = 30
   memory_size      = 256
 
@@ -36,6 +21,7 @@ resource "aws_lambda_function" "upload" {
     variables = {
       S3_BUCKET      = var.s3_bucket_name
       UPLOAD_PREFIX  = "uploads/"
+      AWS_REGION     = "us-east-2"
     }
   }
 
@@ -54,24 +40,13 @@ resource "aws_cloudwatch_log_group" "upload_lambda_logs" {
 # CROP LAMBDA FUNCTION
 # ============================================================================
 
-# Crear archivo ZIP simple para crop-lambda
-data "archive_file" "crop_lambda_zip" {
-  type        = "zip"
-  output_path = "/tmp/crop-lambda.zip"
-  
-  source {
-    content  = "exports.handler = async (event) => { return { statusCode: 200, body: 'Crop handler' }; };"
-    filename = "index.js"
-  }
-}
-
 resource "aws_lambda_function" "crop" {
-  filename         = data.archive_file.crop_lambda_zip.output_path
+  filename         = "${path.module}/../../../application/lambda-functions/crop-lambda.zip"
   function_name   = "${var.project_name}-${var.environment}-crop-lambda"
   role             = var.crop_lambda_role_arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
-  source_code_hash = data.archive_file.crop_lambda_zip.output_base64sha256
+  source_code_hash = filebase64sha256("${path.module}/../../../application/lambda-functions/crop-lambda.zip")
   timeout          = 60
   memory_size      = 512
 
@@ -84,6 +59,7 @@ resource "aws_lambda_function" "crop" {
     variables = {
       S3_BUCKET       = var.s3_bucket_name
       PROCESSED_PREFIX = "processed/"
+      AWS_REGION      = "us-east-2"
     }
   }
 
@@ -106,6 +82,5 @@ resource "aws_lambda_event_source_mapping" "sqs_to_crop" {
   function_name    = aws_lambda_function.crop.arn
   batch_size       = 5
   
-  # Reportar solo los fallos en el lote, no todo el lote
   function_response_types = ["ReportBatchItemFailures"]
 }
